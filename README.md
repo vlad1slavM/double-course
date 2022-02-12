@@ -1,1 +1,1 @@
-# double-course
+# Template for backend course
