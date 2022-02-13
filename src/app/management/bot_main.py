@@ -1,17 +1,6 @@
 import re
 from django.core.exceptions import ObjectDoesNotExist
-import environ
-import os
-
-from app.models import User
-
-env = environ.Env(
-    TOKEN=(str, ''),
-)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-environ.Env.read_env(os.path.join(BASE_DIR, 'envs/.env'))
-
-TOKEN = env('TOKEN')
+from app.internal.services.user_service import create_user, get, update_info
 
 
 def start(update, context):
@@ -20,14 +9,7 @@ def start(update, context):
     username = update.message.from_user.username
     first_name = update.message.from_user.first_name
     last_name = update.message.from_user.last_name
-    p, created = User.objects.get_or_create(
-        tg_id=tg_id,
-        defaults={
-            'username': username,
-            'first_name': first_name,
-            'last_name': last_name
-        }
-    )
+    created = create_user(tg_id, username, first_name, last_name)
     if created is False:
         context.bot.send_message(chat_id=chat_id,
                                  text='Такой пользователь уже создан')
@@ -51,7 +33,14 @@ def me(update, context):
     tg_id = update.message.from_user.id
     chat_id = update.effective_chat.id
     try:
-        user = User.objects.get(tg_id=tg_id)
+        user = get(tg_id)
+        user_created = True
+
+    except ObjectDoesNotExist:
+        user_created = False
+        user = False
+
+    if user_created:
         if len(user.phoneNumber) == 0:
             context.bot.send_message(chat_id=chat_id,
                                      text='Добавьте номер телефона с помощью команды:\n'
@@ -61,7 +50,7 @@ def me(update, context):
                                      text=f'Ваше имя: {user.first_name} \n'
                                           f'Ваша фамилия: {user.last_name} \n'
                                           f'Ваш номер телефона: {user.phoneNumber}')
-    except ObjectDoesNotExist:
+    else:
         context.bot.send_message(chat_id=chat_id,
                                  text='Сначала добавьте свои данные в базу данных \n'
                                       'С помощью команды /start \n'
@@ -73,22 +62,19 @@ def on_message(update, context):
     tg_id = update.message.from_user.id
     chat_id = update.effective_chat.id
     try:
-        User.objects.get(tg_id=tg_id)
+        get(tg_id)
+        user_created = True
     except ObjectDoesNotExist:
+        user_created = False
+
+    if not user_created:
         context.bot.send_message(chat_id=chat_id,
                                  text='Вомрользуйтесь командой /start')
-        return 1
-
-    if re.match(r'^\+?1?\d{8,15}$', text) is None and len(text) < 10:
-        context.bot.send_message(chat_id=chat_id,
-                                 text='Пожалуйста, введите номер телефона')
     else:
-        p, _ = User.objects.update_or_create(
-            tg_id=tg_id,
-            defaults={
-                'phoneNumber': str(text)
-            }
-        )
-
-        context.bot.send_message(chat_id=chat_id,
-                                 text='Ваш номер был успешно добавлен')
+        if re.match(r'^\+?1?\d{8,15}$', text) is None and len(text) < 10:
+            context.bot.send_message(chat_id=chat_id,
+                                     text='Пожалуйста, введите номер телефона')
+        else:
+            update_info(tg_id, text)
+            context.bot.send_message(chat_id=chat_id,
+                                     text='Ваш номер был успешно добавлен')
