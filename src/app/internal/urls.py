@@ -1,7 +1,7 @@
 from django.urls import path
 
-from .transport.rest.handlers import echo
+from .transport.rest.handlers import get_info_about_user
 
 urlpatterns = [
-    path("me", echo),
+    path("me", get_info_about_user),
 ]

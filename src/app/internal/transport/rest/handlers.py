@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from app.internal.services.user_service import get
 
 
-def echo(request):
+def get_info_about_user(request):
     if request.method == 'GET':
         tg_id = request.GET.get('tg_id')
         user_created, user = get(tg_id)

@@ -1,6 +1,12 @@
 import re
+from enum import Enum
 
 from app.internal.services.user_service import create_user, get, update_info
+
+
+class HandlerStates(Enum):
+    PHONE = 0
+    EXIT = -1
 
 
 def validate_user(func):
@@ -31,6 +37,7 @@ def validate_phone_number(func):
         else:
             args[1].bot.send_message(chat_id=chat_id,
                                      text='Сначала воспользуйтесь командой /start')
+
     return wrapper
 
 
@@ -59,7 +66,7 @@ def start(update, context):
 def set_phone(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="Напишете свой номер телефона в формате +7")
-    return 0
+    return HandlerStates.PHONE.value
 
 
 def phone(update, context):
@@ -71,13 +78,13 @@ def phone(update, context):
         context.bot.send_message(chat_id=chat_id,
                                  text='Это не номер телефона\n'
                                       'Если хотите завершить ввод введите /cancel')
-        return 0
+        return HandlerStates.PHONE.value
 
     else:
         update_info(tg_id, text)
         context.bot.send_message(chat_id=chat_id,
                                  text='Ваш номер был успешно добавлен')
-        return -1
+        return HandlerStates.EXIT.value
 
 
 def cancel(update, context):
@@ -93,4 +100,3 @@ def me(update, context):
                              text=f'Ваше имя: {user.first_name} \n'
                                   f'Ваша фамилия: {user.last_name} \n'
                                   f'Ваш номер телефона: {user.phoneNumber}')
-
