@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 
 def echo(request):
-    if request == 'GET':
+    if request.method == 'GET':
         tg_id = request.GET.get('tg_id')
         try:
             user = get(tg_id)
