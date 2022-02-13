@@ -1,4 +1,5 @@
 from app.models import User
+from django.core.exceptions import ObjectDoesNotExist
 
 
 def create_user(tg_id, username, first_name, last_name):
@@ -15,8 +16,14 @@ def create_user(tg_id, username, first_name, last_name):
 
 
 def get(tg_id):
-    user = User.objects.get(tg_id=tg_id)
-    return user
+    try:
+        user = User.objects.get(tg_id=tg_id)
+        user_created = True
+    except ObjectDoesNotExist:
+        user_created = False
+        user = False
+
+    return user_created, user
 
 
 def update_info(tg_id, phone_number):

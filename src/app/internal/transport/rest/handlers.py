@@ -1,17 +1,13 @@
-from django.http import HttpResponse
-from app.internal.services.user_service import get
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse
+
+from app.internal.services.user_service import get
 
 
 def echo(request):
     if request.method == 'GET':
         tg_id = request.GET.get('tg_id')
-        try:
-            user = get(tg_id)
-            user_created = True
-        except ObjectDoesNotExist:
-            user_created = False
-            user = False
+        user_created, user = get(tg_id)
 
         if user_created:
             return HttpResponse(f'Name: {user.first_name} <br>'
